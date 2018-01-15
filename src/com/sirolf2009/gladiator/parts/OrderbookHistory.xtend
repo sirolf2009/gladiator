@@ -1,8 +1,11 @@
 package com.sirolf2009.gladiator.parts
 
+import com.google.common.eventbus.Subscribe
+import com.sirolf2009.commonwealth.ITick
 import com.sirolf2009.commonwealth.timeseries.IPoint
 import com.sirolf2009.commonwealth.timeseries.Point
 import com.sirolf2009.commonwealth.trading.orderbook.IOrderbook
+import gladiator.Activator
 import java.time.Duration
 import java.util.Date
 import java.util.HashMap
@@ -22,9 +25,6 @@ import org.swtchart.ISeries.SeriesType
 import org.swtchart.LineStyle
 import org.swtchart.Range
 import org.swtchart.internal.series.LineSeries
-import com.google.common.eventbus.Subscribe
-import com.sirolf2009.commonwealth.ITick
-import gladiator.Activator
 
 class OrderbookHistory extends ChartPart {
 

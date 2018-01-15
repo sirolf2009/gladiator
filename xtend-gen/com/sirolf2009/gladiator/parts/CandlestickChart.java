@@ -15,6 +15,7 @@ import com.sirolf2009.gladiator.parts.candlestickchart.LimitOrders;
 import com.sirolf2009.gladiator.parts.candlestickchart.PriceLine;
 import gladiator.Activator;
 import java.awt.Rectangle;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -33,12 +34,16 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.xtext.xbase.lib.Conversions;
+import org.eclipse.xtext.xbase.lib.Exceptions;
 import org.eclipse.xtext.xbase.lib.Functions.Function1;
 import org.eclipse.xtext.xbase.lib.IterableExtensions;
 import org.eclipse.xtext.xbase.lib.ListExtensions;
 import org.eclipse.xtext.xbase.lib.ObjectExtensions;
 import org.eclipse.xtext.xbase.lib.Pair;
 import org.eclipse.xtext.xbase.lib.Procedures.Procedure1;
+import org.knowm.xchange.currency.CurrencyPair;
+import org.knowm.xchange.dto.Order;
+import org.knowm.xchange.service.trade.TradeService;
 import org.swtchart.Chart;
 import org.swtchart.IAxis;
 import org.swtchart.IAxisTick;
@@ -141,20 +146,31 @@ public class CandlestickChart extends ChartPart {
       };
       this.getPlotArea().addListener(SWT.MouseMove, _function_1);
       final Listener _function_2 = (Event it) -> {
-        final Rectangle addOrderPosition = addOrderPos.get();
-        if (((addOrderPosition != null) && addOrderPosition.contains(it.x, it.y))) {
-          final Double close = IterableExtensions.<Double>last(((Iterable<Double>)Conversions.doWrapArray(this.series.getYSeries())));
-          final double price = this.yAxis().getDataCoordinate(it.y);
-          if ((price > (close).doubleValue())) {
-            LimitOrder _limitOrder = new LimitOrder(Double.valueOf(price), Double.valueOf(0.01d));
-            askOrders.add(_limitOrder);
-          } else {
-            if ((price < (close).doubleValue())) {
-              LimitOrder _limitOrder_1 = new LimitOrder(Double.valueOf(price), Double.valueOf(0.01d));
-              bidOrders.add(_limitOrder_1);
+        try {
+          final Rectangle addOrderPosition = addOrderPos.get();
+          if (((addOrderPosition != null) && addOrderPosition.contains(it.x, it.y))) {
+            final Double close = IterableExtensions.<Double>last(((Iterable<Double>)Conversions.doWrapArray(this.series.getYSeries())));
+            final double price = this.yAxis().getDataCoordinate(it.y);
+            if ((price > (close).doubleValue())) {
+              LimitOrder _limitOrder = new LimitOrder(Double.valueOf(price), Double.valueOf(0.01d));
+              askOrders.add(_limitOrder);
+              TradeService _tradeService = Activator.getExchange().getTradeService();
+              BigDecimal _valueOf = BigDecimal.valueOf(0.01);
+              BigDecimal _valueOf_1 = BigDecimal.valueOf(0.01);
+              Date _date = new Date();
+              BigDecimal _valueOf_2 = BigDecimal.valueOf(price);
+              org.knowm.xchange.dto.trade.LimitOrder _limitOrder_1 = new org.knowm.xchange.dto.trade.LimitOrder(Order.OrderType.ASK, _valueOf, _valueOf_1, CurrencyPair.BTC_EUR, "", _date, _valueOf_2);
+              _tradeService.placeLimitOrder(_limitOrder_1);
+            } else {
+              if ((price < (close).doubleValue())) {
+                LimitOrder _limitOrder_2 = new LimitOrder(Double.valueOf(price), Double.valueOf(0.01d));
+                bidOrders.add(_limitOrder_2);
+              }
             }
+            this.redraw();
           }
-          this.redraw();
+        } catch (Throwable _e) {
+          throw Exceptions.sneakyThrow(_e);
         }
       };
       this.getPlotArea().addListener(SWT.MouseDoubleClick, _function_2);

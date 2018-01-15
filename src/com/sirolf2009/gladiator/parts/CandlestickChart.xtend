@@ -31,6 +31,10 @@ import org.swtchart.ISeries.SeriesType
 import org.swtchart.Range
 import org.swtchart.internal.PlotArea
 import org.swtchart.internal.series.LineSeries
+import org.knowm.xchange.dto.Order.OrderType
+import java.math.BigDecimal
+import org.knowm.xchange.currency.CurrencyPair
+import java.util.Date
 
 class CandlestickChart extends ChartPart {
 
@@ -99,6 +103,7 @@ class CandlestickChart extends ChartPart {
 					val price = yAxis.getDataCoordinate(y)
 					if(price > close) {
 						askOrders.add(new LimitOrder(price, 0.01d))
+						Activator.exchange.tradeService.placeLimitOrder(new org.knowm.xchange.dto.trade.LimitOrder(OrderType.ASK, BigDecimal.valueOf(0.01), BigDecimal.valueOf(0.01), CurrencyPair.BTC_EUR, "", new Date(), BigDecimal.valueOf(price)))
 					} else if(price < close) {
 						bidOrders.add(new LimitOrder(price, 0.01d))
 					}

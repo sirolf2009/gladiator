@@ -59,20 +59,20 @@ public class DataRetriever implements AutoCloseable {
     }
   }
   
-  public Iterable<ITick> getData(final Date from, final Date to) {
-    final Function1<Date, Optional<ArrayList<ITick>>> _function = (Date it) -> {
+  public Iterable<ITrade> getData(final Date from, final Date to) {
+    final Function1<Date, Optional<ArrayList<ITrade>>> _function = (Date it) -> {
       return this.getData(it);
     };
-    final Function1<Optional<ArrayList<ITick>>, Boolean> _function_1 = (Optional<ArrayList<ITick>> it) -> {
+    final Function1<Optional<ArrayList<ITrade>>, Boolean> _function_1 = (Optional<ArrayList<ITrade>> it) -> {
       return Boolean.valueOf(it.isPresent());
     };
-    final Function1<Optional<ArrayList<ITick>>, ArrayList<ITick>> _function_2 = (Optional<ArrayList<ITick>> it) -> {
+    final Function1<Optional<ArrayList<ITrade>>, ArrayList<ITrade>> _function_2 = (Optional<ArrayList<ITrade>> it) -> {
       return it.get();
     };
-    return Iterables.<ITick>concat(IterableExtensions.<Optional<ArrayList<ITick>>, ArrayList<ITick>>map(IterableExtensions.<Optional<ArrayList<ITick>>>filter(ListExtensions.<Date, Optional<ArrayList<ITick>>>map(TimeUtil.getPointsToDate(this.roundTo15Min(from), this.roundTo15Min(to), 15), _function), _function_1), _function_2));
+    return Iterables.<ITrade>concat(IterableExtensions.<Optional<ArrayList<ITrade>>, ArrayList<ITrade>>map(IterableExtensions.<Optional<ArrayList<ITrade>>>filter(ListExtensions.<Date, Optional<ArrayList<ITrade>>>map(TimeUtil.getPointsToDate(this.roundTo15Min(from), this.roundTo15Min(to), 15), _function), _function_1), _function_2));
   }
   
-  public Optional<ArrayList<ITick>> getData(final Date timestamp) {
+  public Optional<ArrayList<ITrade>> getData(final Date timestamp) {
     final ArrayList<ITick> ticks = new ArrayList<ITick>();
     final ArrayList<ITrade> trades = new ArrayList<ITrade>();
     try {
@@ -91,11 +91,11 @@ public class DataRetriever implements AutoCloseable {
         }
       };
       this.getLines(this.getFile(timestamp)).forEach(_function);
-      return Optional.<ArrayList<ITick>>of(ticks);
+      return Optional.<ArrayList<ITrade>>of(trades);
     } catch (final Throwable _t) {
       if (_t instanceof Exception) {
         final Exception e = (Exception)_t;
-        return Optional.<ArrayList<ITick>>empty();
+        return Optional.<ArrayList<ITrade>>empty();
       } else {
         throw Exceptions.sneakyThrow(_t);
       }
@@ -191,7 +191,7 @@ public class DataRetriever implements AutoCloseable {
   }
   
   public File getFile(final Calendar cal) {
-    File _file = new File("/BTCUSD");
+    File _file = new File("/BTCEUR");
     String _string = Integer.valueOf(cal.get(Calendar.YEAR)).toString();
     final File year = new File(_file, _string);
     String _string_1 = Integer.valueOf(cal.get(Calendar.MONTH)).toString();
@@ -243,8 +243,8 @@ public class DataRetriever implements AutoCloseable {
     long _minus = (_currentTimeMillis - _millis);
     Date _date = new Date(_minus);
     Date _date_1 = new Date();
-    final Consumer<ITick> _function = (ITick it) -> {
-      InputOutput.<ITick>println(it);
+    final Consumer<ITrade> _function = (ITrade it) -> {
+      InputOutput.<ITrade>println(it);
     };
     retriever.getData(_date, _date_1).forEach(_function);
   }

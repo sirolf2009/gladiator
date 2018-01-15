@@ -4,20 +4,22 @@ import com.google.common.eventbus.EventBus
 import com.google.common.eventbus.Subscribe
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
-import com.sirolf2009.bitfinex.wss.BitfinexWebsocketClient
 import com.sirolf2009.bitfinex.wss.event.OnDisconnected
 import com.sirolf2009.bitfinex.wss.event.OnSubscribed
-import com.sirolf2009.bitfinex.wss.model.SubscribeOrderbook
-import com.sirolf2009.bitfinex.wss.model.SubscribeTrades
 import com.sirolf2009.commonwealth.ITick
 import com.sirolf2009.commonwealth.Tick
+import com.sirolf2009.commonwealth.timeseries.Point
 import com.sirolf2009.commonwealth.trading.ITrade
+import com.sirolf2009.commonwealth.trading.Trade
 import com.sirolf2009.commonwealth.trading.orderbook.ILimitOrder
 import com.sirolf2009.commonwealth.trading.orderbook.IOrderbook
 import com.sirolf2009.commonwealth.trading.orderbook.LimitOrder
 import com.sirolf2009.commonwealth.trading.orderbook.Orderbook
 import com.sirolf2009.gladiator.DataRetriever
 import com.sirolf2009.serenity.collector.Collector
+import info.bitrich.xchangestream.core.StreamingExchange
+import info.bitrich.xchangestream.core.StreamingExchangeFactory
+import info.bitrich.xchangestream.gdax.GDAXStreamingExchange
 import java.net.URL
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -39,6 +41,8 @@ import java.util.function.Consumer
 import java.util.stream.Collectors
 import org.apache.commons.io.IOUtils
 import org.eclipse.jface.preference.IPreferenceStore
+import org.knowm.xchange.currency.CurrencyPair
+import org.knowm.xchange.dto.Order.OrderType
 import org.osgi.framework.BundleActivator
 import org.osgi.framework.BundleContext
 
@@ -52,7 +56,7 @@ class Activator implements BundleActivator {
 	private static val data = new EventBus()
 	private static var Activator instance
 	private static var BundleContext context
-	private static var BitfinexWebsocketClient exchange
+	private static var StreamingExchange exchange
 
 	override start(BundleContext bundleContext) throws Exception {
 		instance = this
@@ -72,28 +76,12 @@ class Activator implements BundleActivator {
 				].start()
 			}
 		}, getFirstRunTime(), getPeriod())
-
-//		if(preferenceStore.getBoolean("authenticate")) {
-//			if(!preferenceStore.getString("username").empty) {
-////				val userName = preferenceStore.getString("username")
-//			}
-//			if(!preferenceStore.getString("apiKey").empty) {
-////				val apiKey = preferenceStore.getString("apiKey")
-//			}
-//			if(!preferenceStore.getString("secretKey").empty) {
-////				val secretKey = preferenceStore.getString("secretKey")
-//			}
-//			// TODO auth
-//			connect()
-//		} else {
-//		}
+		
 		new Thread [
 			try {
 				val retriever = new DataRetriever()
-				retriever.getData(new Date(System.currentTimeMillis - Duration.ofHours(2).toMillis()), new Date(System.currentTimeMillis + Duration.ofMinutes(30).toMillis())).forEach [
-					trades.forEach [
-						data.post(it)
-					]
+				retriever.getData(new Date(System.currentTimeMillis - Duration.ofDays(1).toMillis()), new Date(System.currentTimeMillis + Duration.ofMinutes(30).toMillis())).forEach [
+					data.post(it)
 				]
 			} catch(Exception e) {
 				e.printStackTrace()
@@ -105,13 +93,13 @@ class Activator implements BundleActivator {
 	}
 
 	def void connect() {
-		exchange = new BitfinexWebsocketClient() => [
-			eventBus.register(this)
-			new Thread [
-				connectBlocking()
-				send(new SubscribeTrades("BTCUSD"))
-				send(new SubscribeOrderbook("BTCUSD", SubscribeOrderbook.PREC_PRECISE, SubscribeOrderbook.FREQ_REALTIME))
-			].start()
+		val spec = new GDAXStreamingExchange().defaultExchangeSpecification
+		exchange = StreamingExchangeFactory.INSTANCE.createExchange(spec)
+		exchange.connect().subscribe [
+			exchange.getStreamingMarketDataService().getTrades(CurrencyPair.BTC_EUR).subscribe [
+				val trade = new Trade(new Point(timestamp.time, price.doubleValue()), if(type == OrderType.BID) originalAmount.doubleValue() else -originalAmount.doubleValue())
+				onTrade(trade)
+			]
 		]
 	}
 
@@ -181,8 +169,7 @@ class Activator implements BundleActivator {
 	override stop(BundleContext bundleContext) throws Exception {
 		Activator.context = null
 		shouldReconnect.set(false)
-		exchange?.close()
-		exchange = null
+		exchange.disconnect
 	}
 
 	def static getConfiguration(IPreferenceStore preferences, String name, String defaultValue) {
@@ -211,6 +198,10 @@ class Activator implements BundleActivator {
 
 	def static getData() {
 		return data
+	}
+
+	def static getExchange() {
+		return exchange
 	}
 
 	def static getDefault() {

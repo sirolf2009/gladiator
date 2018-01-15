@@ -57,7 +57,7 @@ class DataRetriever implements AutoCloseable {
 					trades += parseTrade
 				}
 			]
-			return Optional.of(ticks)
+			return Optional.of(trades)
 		} catch(Exception e) {
 			return Optional.empty
 		}
@@ -113,7 +113,7 @@ class DataRetriever implements AutoCloseable {
 	}
 
 	def getFile(Calendar cal) {
-		val year = new File(new File("/BTCUSD"), cal.get(Calendar.YEAR).toString())
+		val year = new File(new File("/BTCEUR"), cal.get(Calendar.YEAR).toString())
 		val month = new File(year, cal.get(Calendar.MONTH).toString())
 		val day = new File(month, cal.get(Calendar.DAY_OF_MONTH).toString())
 		val hour = new File(day, cal.get(Calendar.HOUR_OF_DAY).toString())

@@ -1,10 +1,12 @@
 package com.sirolf2009.gladiator
 
+import com.google.common.eventbus.Subscribe
 import com.sirolf2009.commonwealth.ITick
 import com.sirolf2009.commonwealth.Tick
 import com.sirolf2009.commonwealth.indicator.line.ILineIndicator
 import com.sirolf2009.commonwealth.trading.ITrade
 import com.sirolf2009.commonwealth.trading.orderbook.IOrderbook
+import gladiator.Activator
 import java.time.Duration
 import java.util.ArrayList
 import java.util.Calendar
@@ -24,8 +26,6 @@ import org.swtchart.ILineSeries.PlotSymbolType
 import org.swtchart.ISeries.SeriesType
 import org.swtchart.internal.series.BarSeries
 import org.swtchart.internal.series.LineSeries
-import com.google.common.eventbus.Subscribe
-import gladiator.Activator
 
 class SerenityChart extends Chart {
 

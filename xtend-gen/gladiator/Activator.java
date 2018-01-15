@@ -1,6 +1,7 @@
 package gladiator;
 
 import akka.actor.Terminated;
+import com.google.common.base.Objects;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.gson.Gson;
@@ -8,13 +9,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.sirolf2009.bitfinex.wss.BitfinexWebsocketClient;
 import com.sirolf2009.bitfinex.wss.event.OnDisconnected;
 import com.sirolf2009.bitfinex.wss.event.OnSubscribed;
-import com.sirolf2009.bitfinex.wss.model.SubscribeOrderbook;
-import com.sirolf2009.bitfinex.wss.model.SubscribeTrades;
 import com.sirolf2009.commonwealth.ITick;
 import com.sirolf2009.commonwealth.Tick;
+import com.sirolf2009.commonwealth.timeseries.Point;
 import com.sirolf2009.commonwealth.trading.ITrade;
 import com.sirolf2009.commonwealth.trading.orderbook.ILimitOrder;
 import com.sirolf2009.commonwealth.trading.orderbook.IOrderbook;
@@ -22,6 +21,10 @@ import com.sirolf2009.commonwealth.trading.orderbook.LimitOrder;
 import com.sirolf2009.commonwealth.trading.orderbook.Orderbook;
 import com.sirolf2009.gladiator.DataRetriever;
 import com.sirolf2009.serenity.collector.Collector;
+import info.bitrich.xchangestream.core.StreamingExchange;
+import info.bitrich.xchangestream.core.StreamingExchangeFactory;
+import info.bitrich.xchangestream.gdax.GDAXStreamingExchange;
+import io.reactivex.functions.Action;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -50,9 +53,11 @@ import org.eclipse.xtext.xbase.lib.ExclusiveRange;
 import org.eclipse.xtext.xbase.lib.Functions.Function1;
 import org.eclipse.xtext.xbase.lib.IterableExtensions;
 import org.eclipse.xtext.xbase.lib.ListExtensions;
-import org.eclipse.xtext.xbase.lib.ObjectExtensions;
 import org.eclipse.xtext.xbase.lib.Pair;
-import org.eclipse.xtext.xbase.lib.Procedures.Procedure1;
+import org.knowm.xchange.ExchangeSpecification;
+import org.knowm.xchange.currency.CurrencyPair;
+import org.knowm.xchange.dto.Order;
+import org.knowm.xchange.dto.marketdata.Trade;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import scala.concurrent.Future;
@@ -75,7 +80,7 @@ public class Activator implements BundleActivator {
   
   private static BundleContext context;
   
-  private static BitfinexWebsocketClient exchange;
+  private static StreamingExchange exchange;
   
   @Override
   public void start(final BundleContext bundleContext) throws Exception {
@@ -104,18 +109,15 @@ public class Activator implements BundleActivator {
       try {
         final DataRetriever retriever = new DataRetriever();
         long _currentTimeMillis = System.currentTimeMillis();
-        long _millis = Duration.ofHours(2).toMillis();
+        long _millis = Duration.ofDays(1).toMillis();
         long _minus = (_currentTimeMillis - _millis);
         Date _date = new Date(_minus);
         long _currentTimeMillis_1 = System.currentTimeMillis();
         long _millis_1 = Duration.ofMinutes(30).toMillis();
         long _plus = (_currentTimeMillis_1 + _millis_1);
         Date _date_1 = new Date(_plus);
-        final Consumer<ITick> _function_1 = (ITick it) -> {
-          final Consumer<ITrade> _function_2 = (ITrade it_1) -> {
-            Activator.data.post(it_1);
-          };
-          it.getTrades().forEach(_function_2);
+        final Consumer<ITrade> _function_1 = (ITrade it) -> {
+          Activator.data.post(it);
         };
         retriever.getData(_date, _date_1).forEach(_function_1);
       } catch (final Throwable _t) {
@@ -141,24 +143,28 @@ public class Activator implements BundleActivator {
   }
   
   public void connect() {
-    BitfinexWebsocketClient _bitfinexWebsocketClient = new BitfinexWebsocketClient();
-    final Procedure1<BitfinexWebsocketClient> _function = (BitfinexWebsocketClient it) -> {
-      it.getEventBus().register(this);
-      final Runnable _function_1 = () -> {
-        try {
-          it.connectBlocking();
-          SubscribeTrades _subscribeTrades = new SubscribeTrades("BTCUSD");
-          it.send(_subscribeTrades);
-          SubscribeOrderbook _subscribeOrderbook = new SubscribeOrderbook("BTCUSD", SubscribeOrderbook.PREC_PRECISE, SubscribeOrderbook.FREQ_REALTIME);
-          it.send(_subscribeOrderbook);
-        } catch (Throwable _e) {
-          throw Exceptions.sneakyThrow(_e);
+    final ExchangeSpecification spec = new GDAXStreamingExchange().getDefaultExchangeSpecification();
+    Activator.exchange = StreamingExchangeFactory.INSTANCE.createExchange(spec);
+    final Action _function = () -> {
+      final io.reactivex.functions.Consumer<Trade> _function_1 = (Trade it) -> {
+        long _time = it.getTimestamp().getTime();
+        double _doubleValue = it.getPrice().doubleValue();
+        Point _point = new Point(Long.valueOf(_time), Double.valueOf(_doubleValue));
+        double _xifexpression = (double) 0;
+        Order.OrderType _type = it.getType();
+        boolean _equals = Objects.equal(_type, Order.OrderType.BID);
+        if (_equals) {
+          _xifexpression = it.getOriginalAmount().doubleValue();
+        } else {
+          double _doubleValue_1 = it.getOriginalAmount().doubleValue();
+          _xifexpression = (-_doubleValue_1);
         }
+        final com.sirolf2009.commonwealth.trading.Trade trade = new com.sirolf2009.commonwealth.trading.Trade(_point, Double.valueOf(_xifexpression));
+        this.onTrade(trade);
       };
-      new Thread(_function_1).start();
+      Activator.exchange.getStreamingMarketDataService().getTrades(CurrencyPair.BTC_EUR).subscribe(_function_1);
     };
-    BitfinexWebsocketClient _doubleArrow = ObjectExtensions.<BitfinexWebsocketClient>operator_doubleArrow(_bitfinexWebsocketClient, _function);
-    Activator.exchange = _doubleArrow;
+    Activator.exchange.connect().subscribe(_function);
   }
   
   @Subscribe
@@ -252,10 +258,7 @@ public class Activator implements BundleActivator {
   public void stop(final BundleContext bundleContext) throws Exception {
     Activator.context = null;
     Activator.shouldReconnect.set(false);
-    if (Activator.exchange!=null) {
-      Activator.exchange.close();
-    }
-    Activator.exchange = null;
+    Activator.exchange.disconnect();
   }
   
   public static String getConfiguration(final IPreferenceStore preferences, final String name, final String defaultValue) {
@@ -287,6 +290,10 @@ public class Activator implements BundleActivator {
   
   public static EventBus getData() {
     return Activator.data;
+  }
+  
+  public static StreamingExchange getExchange() {
+    return Activator.exchange;
   }
   
   public static Activator getDefault() {
