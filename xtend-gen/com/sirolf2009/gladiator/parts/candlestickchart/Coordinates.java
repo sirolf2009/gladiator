@@ -22,7 +22,7 @@ public class Coordinates implements ICustomPaintListener {
   
   @Override
   public boolean drawBehindSeries() {
-    return true;
+    return false;
   }
   
   @Override

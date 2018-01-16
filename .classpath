@@ -41,7 +41,7 @@
 	<classpathentry exported="true" kind="lib" path="libs/org.swtchart.ext_0.10.0.v20160212.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/reactive-streams-1.0.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/reactive-streams-1.0.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/rescu-2.0.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/rescu-2.0.1.jar" sourcepath="/home/floris/.m2/repository/com/github/mmazi/rescu/2.0.1/rescu-2.0.1-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/rxjava-2.0.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/scala-java8-compat_2.12-0.8.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/scala-library-2.12.4.jar"/>
@@ -60,7 +60,7 @@
 	<classpathentry exported="true" kind="lib" path="libs/util-0.0.1-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/xchange-core-4.3.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/xchange-gdax-4.2.4-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/xchange-gdax-4.3.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/xchange-gdax-4.3.0.jar" sourcepath="/home/floris/.m2/repository/org/knowm/xchange/xchange-gdax/4.3.0/xchange-gdax-4.3.0-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/xchange-stream-core-4.2.4-SNAPSHOT.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>

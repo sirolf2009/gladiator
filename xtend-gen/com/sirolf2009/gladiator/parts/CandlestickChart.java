@@ -1,12 +1,12 @@
 package com.sirolf2009.gladiator.parts;
 
+import com.google.common.base.Objects;
 import com.google.common.eventbus.Subscribe;
 import com.sirolf2009.commonwealth.timeseries.ICandlestick;
 import com.sirolf2009.commonwealth.trading.ITrade;
 import com.sirolf2009.commonwealth.trading.orderbook.ILimitOrder;
-import com.sirolf2009.commonwealth.trading.orderbook.LimitOrder;
 import com.sirolf2009.gladiator.CandlestickBuilder;
-import com.sirolf2009.gladiator.candlestickbuilder.Timeframe1Min;
+import com.sirolf2009.gladiator.candlestickbuilder.Timeframe15Min;
 import com.sirolf2009.gladiator.parts.ChartPart;
 import com.sirolf2009.gladiator.parts.candlestickchart.AddOrderButton;
 import com.sirolf2009.gladiator.parts.candlestickchart.Coordinates;
@@ -16,8 +16,7 @@ import com.sirolf2009.gladiator.parts.candlestickchart.PriceLine;
 import gladiator.Activator;
 import java.awt.Rectangle;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.math.RoundingMode;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.PostConstruct;
 import org.eclipse.e4.ui.di.Focus;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseWheelListener;
@@ -43,6 +43,7 @@ import org.eclipse.xtext.xbase.lib.Pair;
 import org.eclipse.xtext.xbase.lib.Procedures.Procedure1;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.Order;
+import org.knowm.xchange.dto.trade.LimitOrder;
 import org.knowm.xchange.service.trade.TradeService;
 import org.swtchart.Chart;
 import org.swtchart.IAxis;
@@ -59,7 +60,7 @@ import org.swtchart.internal.series.LineSeries;
 @SuppressWarnings("all")
 public class CandlestickChart extends ChartPart {
   public static class CandlestickChartComponent extends Chart {
-    private final CandlestickBuilder builder = new CandlestickBuilder(new Timeframe1Min());
+    private final CandlestickBuilder builder = new CandlestickBuilder(new Timeframe15Min());
     
     private final AtomicReference<ICandlestick> currentCandlestick = new AtomicReference<ICandlestick>();
     
@@ -111,10 +112,8 @@ public class CandlestickChart extends ChartPart {
       Pair<Integer, Integer> _mappedTo = Pair.<Integer, Integer>of(Integer.valueOf(0), Integer.valueOf(0));
       final AtomicReference<Pair<Integer, Integer>> mousePos = new AtomicReference<Pair<Integer, Integer>>(_mappedTo);
       final AtomicReference<Rectangle> addOrderPos = new AtomicReference<Rectangle>();
-      ArrayList<ILimitOrder> _arrayList = new ArrayList<ILimitOrder>();
-      final List<ILimitOrder> askOrders = Collections.<ILimitOrder>synchronizedList(_arrayList);
-      ArrayList<ILimitOrder> _arrayList_1 = new ArrayList<ILimitOrder>();
-      final List<ILimitOrder> bidOrders = Collections.<ILimitOrder>synchronizedList(_arrayList_1);
+      final AtomicReference<List<ILimitOrder>> askOrders = new AtomicReference<List<ILimitOrder>>();
+      final AtomicReference<List<ILimitOrder>> bidOrders = new AtomicReference<List<ILimitOrder>>();
       Composite _plotArea = this.getPlotArea();
       final Procedure1<PlotArea> _function = (PlotArea it) -> {
         Crosshair _crosshair = new Crosshair(mousePos, it);
@@ -151,29 +150,35 @@ public class CandlestickChart extends ChartPart {
           if (((addOrderPosition != null) && addOrderPosition.contains(it.x, it.y))) {
             final Double close = IterableExtensions.<Double>last(((Iterable<Double>)Conversions.doWrapArray(this.series.getYSeries())));
             final double price = this.yAxis().getDataCoordinate(it.y);
+            final BigDecimal limitPrice = BigDecimal.valueOf(price).setScale(2, RoundingMode.HALF_UP);
             if ((price > (close).doubleValue())) {
-              LimitOrder _limitOrder = new LimitOrder(Double.valueOf(price), Double.valueOf(0.01d));
-              askOrders.add(_limitOrder);
               TradeService _tradeService = Activator.getExchange().getTradeService();
               BigDecimal _valueOf = BigDecimal.valueOf(0.01);
               BigDecimal _valueOf_1 = BigDecimal.valueOf(0.01);
               Date _date = new Date();
-              BigDecimal _valueOf_2 = BigDecimal.valueOf(price);
-              org.knowm.xchange.dto.trade.LimitOrder _limitOrder_1 = new org.knowm.xchange.dto.trade.LimitOrder(Order.OrderType.ASK, _valueOf, _valueOf_1, CurrencyPair.BTC_EUR, "", _date, _valueOf_2);
-              _tradeService.placeLimitOrder(_limitOrder_1);
+              LimitOrder _limitOrder = new LimitOrder(Order.OrderType.ASK, _valueOf, _valueOf_1, CurrencyPair.BTC_EUR, "", _date, limitPrice);
+              _tradeService.placeLimitOrder(_limitOrder);
             } else {
               if ((price < (close).doubleValue())) {
-                LimitOrder _limitOrder_2 = new LimitOrder(Double.valueOf(price), Double.valueOf(0.01d));
-                bidOrders.add(_limitOrder_2);
+                TradeService _tradeService_1 = Activator.getExchange().getTradeService();
+                BigDecimal _valueOf_2 = BigDecimal.valueOf(0.01);
+                BigDecimal _valueOf_3 = BigDecimal.valueOf(0.01);
+                Date _date_1 = new Date();
+                LimitOrder _limitOrder_1 = new LimitOrder(Order.OrderType.BID, _valueOf_2, _valueOf_3, CurrencyPair.BTC_EUR, "", _date_1, limitPrice);
+                _tradeService_1.placeLimitOrder(_limitOrder_1);
               }
             }
-            this.redraw();
           }
-        } catch (Throwable _e) {
-          throw Exceptions.sneakyThrow(_e);
+        } catch (final Throwable _t) {
+          if (_t instanceof Exception) {
+            final Exception e = (Exception)_t;
+            MessageDialog.openError(it.display.getActiveShell(), "Error", e.getMessage());
+          } else {
+            throw Exceptions.sneakyThrow(_t);
+          }
         }
       };
-      this.getPlotArea().addListener(SWT.MouseDoubleClick, _function_2);
+      this.getPlotArea().addListener(SWT.MouseDown, _function_2);
       final MouseWheelListener _function_3 = (MouseEvent it) -> {
         this.customRange.set(true);
         int _get = this.customXRange.get();
@@ -187,17 +192,61 @@ public class CandlestickChart extends ChartPart {
         if (_lessThan) {
           this.customXRange.set(2);
         }
-        final Runnable _function_4 = () -> {
-          boolean _isDisposed = this.isDisposed();
-          if (_isDisposed) {
-            return;
-          }
-          this.setRange();
-          this.redraw();
-        };
-        it.display.syncExec(_function_4);
+        this.updateChart();
       };
       this.getPlotArea().addMouseWheelListener(_function_3);
+      final Runnable _function_4 = () -> {
+        while (true) {
+          {
+            try {
+              final List<LimitOrder> orders = Activator.getExchange().getTradeService().getOpenOrders(Activator.getExchange().getTradeService().createOpenOrdersParams()).getOpenOrders();
+              final Function1<LimitOrder, Boolean> _function_5 = (LimitOrder it) -> {
+                Order.OrderType _type = it.getType();
+                return Boolean.valueOf(Objects.equal(_type, Order.OrderType.ASK));
+              };
+              final Function1<LimitOrder, ILimitOrder> _function_6 = (LimitOrder it) -> {
+                double _doubleValue = it.getLimitPrice().doubleValue();
+                double _doubleValue_1 = it.getOriginalAmount().doubleValue();
+                com.sirolf2009.commonwealth.trading.orderbook.LimitOrder _limitOrder = new com.sirolf2009.commonwealth.trading.orderbook.LimitOrder(Double.valueOf(_doubleValue), Double.valueOf(_doubleValue_1));
+                return ((ILimitOrder) _limitOrder);
+              };
+              final List<ILimitOrder> ask = IterableExtensions.<ILimitOrder>toList(IterableExtensions.<LimitOrder, ILimitOrder>map(IterableExtensions.<LimitOrder>filter(orders, _function_5), _function_6));
+              final Function1<LimitOrder, Boolean> _function_7 = (LimitOrder it) -> {
+                Order.OrderType _type = it.getType();
+                return Boolean.valueOf(Objects.equal(_type, Order.OrderType.BID));
+              };
+              final Function1<LimitOrder, ILimitOrder> _function_8 = (LimitOrder it) -> {
+                double _doubleValue = it.getLimitPrice().doubleValue();
+                double _doubleValue_1 = it.getOriginalAmount().doubleValue();
+                com.sirolf2009.commonwealth.trading.orderbook.LimitOrder _limitOrder = new com.sirolf2009.commonwealth.trading.orderbook.LimitOrder(Double.valueOf(_doubleValue), Double.valueOf(_doubleValue_1));
+                return ((ILimitOrder) _limitOrder);
+              };
+              final List<ILimitOrder> bid = IterableExtensions.<ILimitOrder>toList(IterableExtensions.<LimitOrder, ILimitOrder>map(IterableExtensions.<LimitOrder>filter(orders, _function_7), _function_8));
+              askOrders.set(ask);
+              bidOrders.set(bid);
+              this.updateChart();
+            } catch (final Throwable _t) {
+              if (_t instanceof Exception) {
+                final Exception e = (Exception)_t;
+                e.printStackTrace();
+              } else {
+                throw Exceptions.sneakyThrow(_t);
+              }
+            }
+            try {
+              Thread.sleep(1000);
+            } catch (final Throwable _t_1) {
+              if (_t_1 instanceof Exception) {
+                final Exception e_1 = (Exception)_t_1;
+                e_1.printStackTrace();
+              } else {
+                throw Exceptions.sneakyThrow(_t_1);
+              }
+            }
+          }
+        }
+      };
+      new Thread(_function_4).start();
     }
     
     @Subscribe
@@ -236,6 +285,18 @@ public class CandlestickChart extends ChartPart {
           return Double.valueOf((_doubleValue - _doubleValue_1));
         };
         _yErrorBar_1.setMinusErrors(((double[])Conversions.unwrapArray(ListExtensions.<ICandlestick, Double>map(candles, _function_4), double.class)));
+        this.setRange();
+        this.redraw();
+      };
+      this.getDisplay().syncExec(_function);
+    }
+    
+    public void updateChart() {
+      final Runnable _function = () -> {
+        boolean _isDisposed = this.isDisposed();
+        if (_isDisposed) {
+          return;
+        }
         this.setRange();
         this.redraw();
       };

@@ -15,7 +15,7 @@ import org.swtchart.IAxis
 	val IAxis yAxis
 
 	override drawBehindSeries() {
-		return true
+		return false
 	}
 
 	override paintControl(PaintEvent e) {

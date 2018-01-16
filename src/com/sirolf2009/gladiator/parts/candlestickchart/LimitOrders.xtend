@@ -2,6 +2,7 @@ package com.sirolf2009.gladiator.parts.candlestickchart
 
 import com.sirolf2009.commonwealth.trading.orderbook.ILimitOrder
 import java.util.List
+import java.util.concurrent.atomic.AtomicReference
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.PaintEvent
 import org.eclipse.swt.graphics.Color
@@ -16,8 +17,8 @@ import org.swtchart.internal.PlotArea
 	val Color bidColor
 	val IAxis yAxis
 	val PlotArea plotArea
-	val List<ILimitOrder> askOrders
-	val List<ILimitOrder> bidOrders
+	val AtomicReference<List<ILimitOrder>> askOrders
+	val AtomicReference<List<ILimitOrder>> bidOrders
 	
 	override drawBehindSeries() {
 		return false
@@ -27,12 +28,12 @@ import org.swtchart.internal.PlotArea
 		val it = e.gc
 		lineStyle = SWT.LINE_DASHDOTDOT
 		foreground = askColor
-		askOrders.forEach[
+		askOrders.get()?.forEach[
 			val height = yAxis.getPixelCoordinate(price.doubleValue())
 			e.gc.drawLine(0, height, plotArea.bounds.width, height)
 		]
 		foreground = bidColor
-		bidOrders.forEach[
+		bidOrders.get()?.forEach[
 			val height = yAxis.getPixelCoordinate(price.doubleValue())
 			e.gc.drawLine(0, height, plotArea.bounds.width, height)
 		]
