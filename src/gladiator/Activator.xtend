@@ -41,6 +41,7 @@ import java.util.function.Consumer
 import java.util.stream.Collectors
 import org.apache.commons.io.IOUtils
 import org.eclipse.jface.preference.IPreferenceStore
+import org.eclipse.jface.preference.PreferenceStore
 import org.knowm.xchange.currency.CurrencyPair
 import org.knowm.xchange.dto.Order.OrderType
 import org.osgi.framework.BundleActivator
@@ -94,6 +95,16 @@ class Activator implements BundleActivator {
 
 	def void connect() {
 		val spec = new GDAXStreamingExchange().defaultExchangeSpecification
+		val store = new PreferenceStore("gladiator.properties") => [
+			try {
+				load()
+			} catch(Exception e) {
+				e.printStackTrace()
+			}
+		]
+        spec.apiKey = store.getString("API_KEY")
+        spec.secretKey = store.getString("API_SECRET")
+        spec.setExchangeSpecificParametersItem("passphrase", store.getString("API_PASSWORD"))
 		exchange = StreamingExchangeFactory.INSTANCE.createExchange(spec)
 		exchange.connect().subscribe [
 			exchange.getStreamingMarketDataService().getTrades(CurrencyPair.BTC_EUR).subscribe [

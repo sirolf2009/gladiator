@@ -186,6 +186,9 @@ class CandlestickChart extends ChartPart {
 
 		def setRange() {
 			val candles = builder.getCandlesticks()
+			if(candles.size() == 0) {
+				return
+			}
 			if(!customRange.get()) {
 				val range = new Range(candles.map[low.doubleValue].min - 10, candles.map[high.doubleValue].max + 10)
 				if(range.lower == range.upper) {

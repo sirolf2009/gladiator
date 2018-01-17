@@ -11,11 +11,11 @@ import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 
 @FinalFieldsConstructor class CandlestickBuilder {
-	
+
 	@Accessors val Timeframe timeframe
 	val candlesticks = new LinkedList<ICandlestick>()
 	@Accessors var MutableCandlestick current
-	
+
 	def void addTrade(ITrade trade) {
 		if(current === null) {
 			current = timeframe.createNewCandlestick(trade)
@@ -28,12 +28,14 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 			}
 		}
 	}
-	
+
 	def List<ICandlestick> getCandlesticks() {
-		return new ArrayList(candlesticks.size()+1) => [
+		return new ArrayList(candlesticks.size() + 1) => [
 			addAll(candlesticks)
-			add(current.immutable())
+			if(current !== null) {
+				add(current.immutable())
+			}
 		]
 	}
-	
+
 }

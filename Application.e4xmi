@@ -8,7 +8,7 @@
     </children>
     <mainMenu xmi:id="_6wlLicgZEeSyMNYR5xypkQ" elementId="org.eclipse.ui.main.menu">
       <children xsi:type="menu:Menu" xmi:id="_6wlLisgZEeSyMNYR5xypkQ" elementId="file" label="File">
-        <children xsi:type="menu:HandledMenuItem" xmi:id="_6wlLi8gZEeSyMNYR5xypkQ" elementId="Gladiator.handleditem.file.open" label="Open" iconURI="platform:/plugin/Gladiator/icons/sample.png" command="_6wlLgMgZEeSyMNYR5xypkQ"/>
+        <children xsi:type="menu:HandledMenuItem" xmi:id="_6wlLi8gZEeSyMNYR5xypkQ" elementId="Gladiator.handleditem.preferences" label="Preferences" iconURI="platform:/plugin/Gladiator/icons/sample.png" command="_6wlLgMgZEeSyMNYR5xypkQ"/>
         <children xsi:type="menu:HandledMenuItem" xmi:id="_6wlLjMgZEeSyMNYR5xypkQ" elementId="Gladiator.handleditem.save" label="Save" iconURI="platform:/plugin/Gladiator/icons/save_edit.png" command="_6wlLg8gZEeSyMNYR5xypkQ"/>
         <children xsi:type="menu:HandledMenuItem" xmi:id="_6wlLjcgZEeSyMNYR5xypkQ" elementId="Gladiator.handleditem.quit" label="Quit" command="_6wlLfMgZEeSyMNYR5xypkQ"/>
       </children>
@@ -24,7 +24,7 @@
     </trimBars>
   </children>
   <handlers xmi:id="_6wlLfcgZEeSyMNYR5xypkQ" elementId="com.sirolf2009.gladiator.handler.quitCommand" contributionURI="bundleclass://Gladiator/com.sirolf2009.gladiator.handlers.QuitHandler" command="_6wlLfMgZEeSyMNYR5xypkQ"/>
-  <handlers xmi:id="_6wlLgcgZEeSyMNYR5xypkQ" elementId="com.sirolf2009.gladiator.handler.openCommand" contributionURI="bundleclass://Gladiator/com.sirolf2009.gladiator.handlers.OpenHandler" command="_6wlLgMgZEeSyMNYR5xypkQ"/>
+  <handlers xmi:id="_6wlLgcgZEeSyMNYR5xypkQ" elementId="com.sirolf2009.gladiator.handler.preferenceCommand" contributionURI="bundleclass://Gladiator/com.sirolf2009.gladiator.handlers.PreferenceHandler" command="_6wlLgMgZEeSyMNYR5xypkQ"/>
   <handlers xmi:id="_6wlLhMgZEeSyMNYR5xypkQ" elementId="com.sirolf2009.gladiator.handler.saveCommand" contributionURI="bundleclass://Gladiator/com.sirolf2009.gladiator.handlers.SaveHandler" command="_6wlLg8gZEeSyMNYR5xypkQ"/>
   <handlers xmi:id="_6wlLh8gZEeSyMNYR5xypkQ" elementId="com.sirolf2009.gladiator.handler.aboutCommand" contributionURI="bundleclass://Gladiator/com.sirolf2009.gladiator.handlers.AboutHandler" command="_6wlLhsgZEeSyMNYR5xypkQ"/>
   <bindingTables xmi:id="_6wlLfsgZEeSyMNYR5xypkQ" elementId="Gladiator.bindingtable" bindingContext="_6wlLecgZEeSyMNYR5xypkQ">
