@@ -77,7 +77,7 @@ class Activator implements BundleActivator {
 				].start()
 			}
 		}, getFirstRunTime(), getPeriod())
-		
+
 		new Thread [
 			try {
 				val retriever = new DataRetriever()
@@ -102,9 +102,9 @@ class Activator implements BundleActivator {
 				e.printStackTrace()
 			}
 		]
-        spec.apiKey = store.getString("API_KEY")
-        spec.secretKey = store.getString("API_SECRET")
-        spec.setExchangeSpecificParametersItem("passphrase", store.getString("API_PASSWORD"))
+		spec.apiKey = store.getString("API_KEY")
+		spec.secretKey = store.getString("API_SECRET")
+		spec.setExchangeSpecificParametersItem("passphrase", store.getString("API_PASSWORD"))
 		exchange = StreamingExchangeFactory.INSTANCE.createExchange(spec)
 		exchange.connect().subscribe [
 			exchange.getStreamingMarketDataService().getTrades(CurrencyPair.BTC_EUR).subscribe [
